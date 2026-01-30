@@ -111,14 +111,29 @@ def get_results(
                 end_date=end_date,
             )
         elif ext == ".eso":
-            raise NotImplementedError("Sorry, this has not been implemented yet.")
-        else:
-            raise TypeError("Unsupported file type '{}' provided!".format(ext))
-    else:
-        if isinstance(file_or_path, (DBEsoFile, DBEsoFileCollection)):
-            raise NotImplementedError("Sorry, this has not been implemented yet.")
-        else:
-            raise TypeError(
-                "Unsupported class '{}' provided!".format(type(file_or_path).__name__)
+            eso_file = DBEsoFile.from_path(file_or_path)
+            results = eso_file.get_results(
+                variables,
+                frequency,
+                alike=alike,
+                start_date=start_date,
+                end_date=end_date,
             )
+        else:
+            raise TypeError(f"Unsupported file type '{ext}' provided!")
+    elif isinstance(file_or_path, DBEsoFile):
+        results = file_or_path.get_results(
+            variables,
+            frequency,
+            alike=alike,
+            start_date=start_date,
+            end_date=end_date,
+        )
+    elif isinstance(file_or_path, DBEsoFileCollection):
+        raise TypeError(
+            "DBEsoFileCollection contains multiple environments. "
+            "Please select a specific DBEsoFile from the collection."
+        )
+    else:
+        raise TypeError(f"Unsupported class '{type(file_or_path).__name__}' provided!")
     return results

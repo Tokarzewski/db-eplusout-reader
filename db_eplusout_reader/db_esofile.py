@@ -1,10 +1,11 @@
 from db_eplusout_reader.constants import RP, TS, A, D, H, M
 from db_eplusout_reader.exceptions import CollectionRequired
-from db_eplusout_reader.processing.esofile_reader import process_eso_file
+from db_eplusout_reader.processing.esofile_reader import Variable, process_eso_file
 from db_eplusout_reader.processing.esofile_time import (
     convert_raw_date_data,
     get_n_days_from_cumulative,
 )
+from db_eplusout_reader.results_dict import ResultsDictionary
 
 
 class DBEsoFile:
@@ -118,6 +119,100 @@ class DBEsoFile:
     def frequencies(self):
         order = {TS: 0, H: 1, D: 2, M: 3, A: 4, RP: 5}
         return sorted(list(self.header.keys()), key=lambda x: order[x])
+
+    def get_results(self, variables, frequency, alike=False, start_date=None, end_date=None):
+        """
+        Extract results from the parsed ESO file data.
+
+        Parameters
+        ----------
+        variables : Variable or list of Variable
+            Requested output variables.
+        frequency : str
+            An output interval, this can be one of {TS, H, D, M, A, RP} constants.
+        alike : default False, bool
+            Specify if full string or only part of variable attribute
+            needs to match, filtering is case insensitive in both cases.
+        start_date : default None, datetime.datetime
+            Lower datetime interval boundary, inclusive.
+        end_date : default None, datetime.datetime
+            Upper datetime interval boundary, inclusive.
+
+        Returns
+        -------
+        ResultsDictionary : Dict of {Variable, list of float}
+
+        """
+        variables = [variables] if isinstance(variables, Variable) else variables
+        freq_header = self.header.get(frequency, {})
+        freq_outputs = self.outputs.get(frequency, {})
+        freq_dates = self.dates.get(frequency, [])
+
+        rd = ResultsDictionary(frequency)
+        matched_vars = self._match_variables(variables, freq_header, alike)
+
+        for var, var_id in matched_vars.items():
+            values = freq_outputs.get(var_id, [])
+            if start_date or end_date:
+                values, filtered_dates = self._filter_by_date(
+                    values, freq_dates, start_date, end_date
+                )
+            rd[var] = values
+
+        if start_date or end_date:
+            rd.time_series = self._filter_dates(freq_dates, start_date, end_date)
+        else:
+            rd.time_series = list(freq_dates)
+
+        return rd
+
+    def _match_variables(self, variables, freq_header, alike):
+        """Find matching variables from the header based on filter criteria."""
+        matched = {}
+        for req_var in variables:
+            for header_var, var_id in freq_header.items():
+                if self._variable_matches(req_var, header_var, alike):
+                    matched[header_var] = var_id
+        return matched
+
+    def _variable_matches(self, request, header, alike):
+        """Check if a header variable matches the requested variable."""
+        for req_val, header_val in zip(request, header):
+            if req_val is None:
+                continue
+            req_lower = req_val.lower()
+            header_lower = header_val.lower()
+            if alike:
+                if req_lower not in header_lower:
+                    return False
+            else:
+                if req_lower != header_lower:
+                    return False
+        return True
+
+    def _filter_by_date(self, values, dates, start_date, end_date):
+        """Filter values by date range."""
+        filtered_values = []
+        filtered_dates = []
+        for val, dt in zip(values, dates):
+            if self._validate_time(dt, start_date, end_date):
+                filtered_values.append(val)
+                filtered_dates.append(dt)
+        return filtered_values, filtered_dates
+
+    def _filter_dates(self, dates, start_date, end_date):
+        """Filter dates by date range."""
+        return [dt for dt in dates if self._validate_time(dt, start_date, end_date)]
+
+    def _validate_time(self, timestamp, start_date, end_date):
+        """Check if given timestamp lies between start and end dates."""
+        if start_date and end_date:
+            return start_date <= timestamp <= end_date
+        if start_date:
+            return timestamp >= start_date
+        if end_date:
+            return timestamp <= end_date
+        return True
 
 
 class DBEsoFileCollection:
