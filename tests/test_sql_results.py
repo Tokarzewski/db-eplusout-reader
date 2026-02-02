@@ -11,9 +11,7 @@ from db_eplusout_reader.sql_reader import get_timestamps_from_sql
 
 class TestSql:
     def test_get_results_exact_match(self, sql_path):
-        variable = Variable(
-            "PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PMV", ""
-        )
+        variable = Variable("PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PMV", "")
         results = get_results(sql_path, variable, frequency=H)
         assert [variable] == list(results.keys()), [variable]
         assert 8760 == len(results[variable])
@@ -21,9 +19,7 @@ class TestSql:
     def test_get_results_multiple_variables(self, sql_path):
         variables = [
             Variable("BLOCK1:ZONE2", "Zone Air Relative Humidity", "%"),
-            Variable(
-                "PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PMV", ""
-            ),
+            Variable("PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PMV", ""),
         ]
         results = get_results(sql_path, variables, frequency=D)
         assert variables == list(results.keys()), variables
@@ -33,18 +29,10 @@ class TestSql:
         variable = Variable("PEOPLE BLOCK", "Zone Thermal Comfort Fanger Model", "")
         results = get_results(sql_path, variable, frequency=H, alike=True)
         expected = [
-            Variable(
-                "PEOPLE BLOCK1:ZONE1", "Zone Thermal Comfort Fanger Model PMV", ""
-            ),
-            Variable(
-                "PEOPLE BLOCK1:ZONE1", "Zone Thermal Comfort Fanger Model PPD", "%"
-            ),
-            Variable(
-                "PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PMV", ""
-            ),
-            Variable(
-                "PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PPD", "%"
-            ),
+            Variable("PEOPLE BLOCK1:ZONE1", "Zone Thermal Comfort Fanger Model PMV", ""),
+            Variable("PEOPLE BLOCK1:ZONE1", "Zone Thermal Comfort Fanger Model PPD", "%"),
+            Variable("PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PMV", ""),
+            Variable("PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PPD", "%"),
         ]
         assert list(results.keys()) == expected
 
@@ -67,9 +55,7 @@ class TestSql:
         assert len(results.first_array) == 31 * 24
 
     def test_get_results_start_end_dates(self, sql_path):
-        variable = Variable(
-            "PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PPD", "%"
-        )
+        variable = Variable("PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PPD", "%")
         results = get_results(
             sql_path,
             variables=variable,
@@ -99,15 +85,11 @@ class TestSql:
             assert len(results_dictionary.time_series) == expected
 
     def test_results_to_csv(self, sql_path):
-        results_dictionary = get_results(
-            sql_path, Variable(None, None, None), frequency=M
-        )
+        results_dictionary = get_results(sql_path, Variable(None, None, None), frequency=M)
         assert ResultsHandler.get_table_shape(results_dictionary.to_table()) == (15, 36)
 
     def test_invalid_file_path(self, test_files_dir):
-        variable = Variable(
-            "PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PPD", "%"
-        )
+        variable = Variable("PEOPLE BLOCK1:ZONE2", "Zone Thermal Comfort Fanger Model PPD", "%")
         invalid_path = os.path.join(test_files_dir, "invalid_file.sql")
         with pytest.raises(IOError):
             get_results(invalid_path, variables=variable, frequency=H)

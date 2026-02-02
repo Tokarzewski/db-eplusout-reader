@@ -1,6 +1,7 @@
 import csv
 import sys
 from collections import OrderedDict
+from datetime import datetime
 
 from db_eplusout_reader.exceptions import InvalidShape, NoResults
 from db_eplusout_reader.processing.esofile_reader import Variable
@@ -37,7 +38,7 @@ class ResultsDictionary(OrderedDict):
     def __init__(self, frequency=""):
         super(ResultsDictionary, self).__init__()  # noqa: R1725
         self.frequency = frequency
-        self.time_series = None
+        self.time_series: list[datetime] | None = None
 
     @property
     def _items(self):
@@ -114,9 +115,7 @@ class ResultsDictionary(OrderedDict):
 
         """
         table = ResultsHandler.convert_dict_to_table(self, explode_header)
-        ResultsWriter.write_table_to_csv(
-            table, path, delimiter, append, title, **kwargs
-        )
+        ResultsWriter.write_table_to_csv(table, path, delimiter, append, title, **kwargs)
 
 
 class ResultsHandler:

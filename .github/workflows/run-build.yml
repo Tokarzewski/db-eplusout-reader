@@ -11,14 +11,35 @@ defaults:
     shell: bash
 
 jobs:
-  call-tests:
-    uses: voightp/github-actions/.github/workflows/run-tests.yml@master
-    with:
-      pytest-args: "tests -v"
-      python-version: "3.10"
-  call-build:
-    needs: call-tests
-    uses: voightp/github-actions/.github/workflows/run-build.yml@master
-    with:
-      matrix: "[ 'ubuntu-latest', 'windows-latest', 'macOS-latest' ]"
-      python-version: "3.10"
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        run: uv python install 3.14
+      - name: Install dependencies
+        run: uv sync --group dev
+      - name: Run tests
+        run: uv run pytest tests -v
+
+  build:
+    needs: test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        run: uv python install 3.14
+      - name: Build package
+        run: uv build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}
+          path: dist/

@@ -1,24 +1,75 @@
-[tool.poetry]
+[project]
 name = "db-eplusout-reader"
-version = "0.3.2"
-description = ""
-authors = ["Vojtech Panek <vojtech.panek@designbuilder.co.uk>"]
+version = "0.4.0"
+description = "A tool to fetch results from EnergyPlus output files"
+authors = [
+    { name = "Vojtech Panek", email = "vojtech.panek@designbuilder.co.uk" },
+    { name = "Bartłomiej Tokarzewski", email = "bartlomiej.tokarzewski@designbuilder.co.uk" },
+]
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = []
 
-[tool.poetry.dependencies]
-python = ">=3.9,<4.0"
-
-[tool.poetry.group.dev.dependencies]
-black = "^24.2.0"
-pre-commit = "^3.6.1"
-flake8 = "^7.0.0"
-pylint = "^3.0.3"
-isort = "^5.13.2"
-pytest = "^8.0.0"
-pytest-cov = "^4.1.0"
+[dependency-groups]
+dev = [
+    "ruff>=0.9.0",
+    "pylint>=3.0.3",
+    "pre-commit>=3.6.1",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+]
 
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.isort]
-profile = "black"
+[tool.hatch.build.targets.wheel]
+packages = ["db_eplusout_reader"]
+
+[tool.ruff]
+line-length = 96
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "C90", # mccabe complexity
+]
+ignore = ["E203"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.isort]
+known-first-party = ["db_eplusout_reader"]
+
+[tool.pylint.main]
+ignore-patterns = ["test_.*\\.py", "conftest\\.py"]
+
+[tool.pylint."messages control"]
+disable = [
+    "C0114", # missing-module-docstring
+    "C0115", # missing-class-docstring
+    "C0116", # missing-function-docstring
+    "C0200", # consider-using-enumerate
+    "C0209", # consider-using-f-string
+    "C0301", # line-too-long (handled by ruff)
+    "R0903", # too-few-public-methods
+    "R0913", # too-many-arguments
+    "R0917", # too-many-positional-arguments
+    "R1704", # redefined-argument-from-local
+    "R1720", # no-else-raise
+    "R1721", # unnecessary-comprehension
+    "R1725", # super-with-arguments
+    "R1737", # use-yield-from
+    "W0108", # unnecessary-lambda
+    "W0212", # protected-access
+    "W0612", # unused-variable
+    "W0621", # redefined-outer-name (common in pytest fixtures)
+    "W0707", # raise-missing-from
+    "W1514", # unspecified-encoding
+]
